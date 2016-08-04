@@ -1,0 +1,3 @@
+Esto es un archivo
+de texto plano
+para editar entre varios
