@@ -1,3 +1,4 @@
 Esto es un archivo
 de texto plano
+Alguien introdujo algo
 para editar entre varios
