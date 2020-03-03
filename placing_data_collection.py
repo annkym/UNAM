@@ -42,6 +42,7 @@ class PlacingDataCollection(object):
         self.num_dir = 1
         self.dir_name = "ponNet%s" % self.num_dir
         self.strategy  = 0
+        self.max_vel = 0
 
         #def max number of images per directory
         self.max_images_dir = 100
@@ -146,11 +147,14 @@ class PlacingDataCollection(object):
 
         if message == self.msg.msg_score_received:
             if self.step == 7:
+                #rospy.loginfo(detail)
                 sc = detail.split("-")
                 self.score = sc[0]
-                self.target = sc[1]
+                self.max_vel = sc[1]
+                self.target = sc[2]
                 rospy.loginfo('SCORE RECEIVED: %s' % self.score)
                 rospy.loginfo('Target RECEIVED: %s' % self.target)
+                rospy.loginfo('MAX Velocity RECEIVED: %s' % self.max_vel)
                 self.step += 1
 
         if message == self.msg.msg_stop:
@@ -291,7 +295,7 @@ class PlacingDataCollection(object):
 
     def save_metadata(self):
         rospy.loginfo("Saving metadata...")
-        self.metadata_file.write(self.camera_height + ":" + self.target + ":" + self.score + ":" + self.strategy +"\n")
+        self.metadata_file.write(self.camera_height + ":" + self.target + ":" + self.score + ":" + self.max_vel + ":" + self.strategy +"\n")
         self.metadata_file.close()
 
     def run(self):
