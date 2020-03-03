@@ -185,6 +185,7 @@ namespace SIGVerse.Competition
 					string sc = this.scorePlacing;
 					this.scoreValText.text = this.scorePlacing.Split(':')[0];
 					sc += "-" + tool.getTargetID();
+
 					this.SendRosMessage (MsgScore, sc);
 					tool.resetRobot ();
 					break;
