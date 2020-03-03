@@ -41,9 +41,8 @@ namespace SIGVerse.Competition.PonNet
 			if (collisionO != 0 || collisionT != 0 || collisionA != 0 || collisionF != 0) {
 				score = 0;
 			} 
-			String scoreText = score + ":" + collisionO + ":" + collisionT + ":" + collisionA + ":" + collisionF; 
-
-			//Debug.Log ("MAXIMA VEL " + maxVel);
+			String scoreText = score + ":" + collisionO + ":" + collisionT + ":" + collisionA + ":" + collisionF + "-" + maxVel; 
+			Debug.Log ("MAXIMA VEL " + maxVel);
 			return scoreText;
 		}
 
