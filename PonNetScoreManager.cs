@@ -33,16 +33,17 @@ namespace SIGVerse.Competition.PonNet
 		}
 
 		public String getScore(){	
-			SIGVerseLogger.Info ("************************************************************************************************ COLLISIONS O ************"+ collisionO  );
+			/*SIGVerseLogger.Info ("************************************************************************************************ COLLISIONS O ************"+ collisionO  );
 			SIGVerseLogger.Info ("************************************************************************************************ COLLISIONS T ************"+ collisionT  );
 			SIGVerseLogger.Info ("************************************************************************************************ COLLISIONS A ************"+ collisionA  );
 			SIGVerseLogger.Info ("************************************************************************************************ COLLISIONS F ************"+ collisionF  );
+			*/
 			if (collisionO != 0 || collisionT != 0 || collisionA != 0 || collisionF != 0) {
 				score = 0;
 			} 
 			String scoreText = score + ":" + collisionO + ":" + collisionT + ":" + collisionA + ":" + collisionF; 
 
-			Debug.Log ("MAXIMA VEL " + maxVel);
+			//Debug.Log ("MAXIMA VEL " + maxVel);
 			return scoreText;
 		}
 
@@ -73,27 +74,27 @@ namespace SIGVerse.Competition.PonNet
 				String colPathArm = SIGVerseUtils.GetHierarchyPath (collision.collider.transform);
 				bool colArm = colPathArm.Contains ("arm_lift_link");
 				if(colArm){
-					SIGVerseLogger.Info ("************************************************************************************************ ARM COLLISION  ************"  );
+					//SIGVerseLogger.Info ("************************************************************************************************ ARM COLLISION  ************"  );
 					collisionA++;
 				}
 				//Obstacle-Obstacle
 				bool colObs = collision.gameObject.CompareTag(TagObstacleCandidates);
 				if(colObs){
-					SIGVerseLogger.Info ("************************************************************************************************ OBSTACLE COLLISION  ************"  );
+					//SIGVerseLogger.Info ("************************************************************************************************ OBSTACLE COLLISION  ************"  );
 					collisionO++;
 				}
 
 				//Target-Obstacle
 				bool colTar = collision.gameObject.CompareTag(TagGraspingCandidates);
 				if(colTar){
-					SIGVerseLogger.Info ("************************************************************************************************ TARGET COLLISION  ************"  );
+					//SIGVerseLogger.Info ("************************************************************************************************ TARGET COLLISION  ************"  );
 					collisionT++;
 				}
 				//Furniture-Obstacle
 				String colPathFur = SIGVerseUtils.GetHierarchyPath (collision.collider.transform);
 				bool colFur = colPathFur.Contains ("Tables");
 				if(colFur){
-					SIGVerseLogger.Info ("************************************************************************************************ FURNITURE COLLISION  ************"  );
+					//SIGVerseLogger.Info ("************************************************************************************************ FURNITURE COLLISION  ************"  );
 					collisionF++;
 				}
 
