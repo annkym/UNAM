@@ -84,6 +84,7 @@ class PlacingDataCollection(object):
         self.pub_arm_trajectory_topic_name = "/hsrb/arm_trajectory_controller/command"
         self.pub_gripper_trajectory_topic_name = "/hsrb/gripper_trajectory_controller/command"
         self.pub_head_trajectory_topic_name = "/hsrb/head_trajectory_controller/command"
+        self.pub_base_twist_topic_name = "/hsrb/opt_command_velocity"
 
         # def subscriber
         self.msg_robot_subscriber = rospy.Subscriber(self.sub_msg_to_robot_topic_name, HandyManMsg, self.msg_to_robot_callback)
@@ -101,6 +102,9 @@ class PlacingDataCollection(object):
 
         self.head_trj_publisher = rospy.Publisher(
             self.pub_head_trajectory_topic_name, JointTrajectory, queue_size=10)
+
+        self.base_twist_publisher = rospy.Publisher(
+            self.pub_base_twist_topic_name, Twist, queue_size=10)
 
         self.image_saver = ImageSaver()
 
@@ -139,7 +143,7 @@ class PlacingDataCollection(object):
                 else :
                     self.furniture_type = "upper"
                 self.camera_height = meta[1]
-                self.strategy = meta[2]
+                self.strategy = int(meta[2])
                 rospy.loginfo('SETTING COMPLETED')
                 rospy.loginfo('CAMERA HEIGHT RECEIVED: %s' % self.camera_height)
                 rospy.loginfo("STRATEGY RECEIVED %s" % self.strategy)
@@ -192,6 +196,43 @@ class PlacingDataCollection(object):
             rospy.logerr(e)
             rospy.logerr(type(e))
 
+    def move_base(self, l_x, l_y, l_z, a_x, a_y, a_z):
+        #rospy.loginfo('call move_base')
+        try:
+            twist = Twist()
+            twist.linear.x = l_x
+            twist.linear.y = l_y
+            twist.linear.z = l_z
+            twist.angular.x = a_x
+            twist.angular.y = a_y
+            twist.angular.z = a_z
+            self.base_twist_publisher.publish(twist)
+        except Exception as e:
+            rospy.logerr(e)
+            rospy.logerr(type(e))
+
+    def stop_base(self):
+        #rospy.loginfo('call stop_base')
+        self.move_base(0, 0, 0, 0, 0, 0)
+
+    def goto_strategy(self):
+        #For strategies 1-4 (2 is default position)
+        #rospy.loginfo("GOTO %s " % self.strategy)
+        if self.strategy == 1 :
+            self.move_base(0.0, 1.0, 0.0, 0, 0, 0)
+            rospy.sleep(rospy.Duration(1.2))
+        elif self.strategy == 2:
+            return
+
+        elif self.strategy == 3 :
+            self.move_base(0.0, -1.0, 0.0, 0, 0, 0)
+            rospy.sleep(rospy.Duration(0.8))
+
+        elif self.strategy == 4 :
+            self.move_base(0.0, -1.0, 0.0, 0, 0, 0)
+            rospy.sleep(rospy.Duration(1.8))
+        self.stop_base()
+
 
     def close_hand(self):
         """
@@ -231,25 +272,29 @@ class PlacingDataCollection(object):
     def set_arm_position(self, position):
         if position == "default":
             self.move_arm([0, 0, 0, -1.57, 0], rospy.Duration(1))
-            rospy.sleep(rospy.Duration(2))
 
         elif position == "capturing_lower":
             self.move_arm([0, 0, 1.57, -1.57, 0], rospy.Duration(1))
-            rospy.sleep(rospy.Duration(2))
+
         elif position == "grasping_lower":
-            self.close_hand()
+            #self.close_hand()
             self.move_arm([0.155, -1.57, 0, 0, 0], rospy.Duration(1))
             rospy.sleep(rospy.Duration(2))
+            self.open_hand()
+            self.move_arm([0.25, -1.57,  0, 0, 0], rospy.Duration(1))
 
 
         elif position == "capturing_upper":
             self.move_arm([0.25, 0, 1.57, -1.57, 0], rospy.Duration(1))
-            rospy.sleep(rospy.Duration(2))
+
         elif position == "grasping_upper":
-            self.close_hand()
+            #self.close_hand()
             self.move_arm([0.42, -1.57, 0, 0, 0], rospy.Duration(1))
             rospy.sleep(rospy.Duration(2))
+            self.open_hand()
+            self.move_arm([0.5, -1.57, 0, 0, 0], rospy.Duration(1))
 
+        rospy.sleep(rospy.Duration(2))
         self.ready_for_capture = True
 
 
@@ -284,7 +329,7 @@ class PlacingDataCollection(object):
             self.image_saver.save_img('depth')
             self.score_file = open('%s/y-%s.txt' % (self.output_dir, self.num_dir), "a")
             self.metadata_file = open('%s/meta-%s.txt' % (self.output_dir, self.num_dir), "a")
-            self.img_in_dir += 1
+            #self.img_in_dir += 1
             rospy.sleep(rospy.Duration(1))
             self.step += 1
 
@@ -295,8 +340,13 @@ class PlacingDataCollection(object):
 
     def save_metadata(self):
         rospy.loginfo("Saving metadata...")
-        self.metadata_file.write(self.camera_height + ":" + self.target + ":" + self.score + ":" + self.max_vel + ":" + self.strategy +"\n")
+        self.metadata_file.write(self.camera_height + ":" + self.target + ":" + self.score + ":" + self.max_vel + ":" + str(self.strategy) +"\n")
         self.metadata_file.close()
+
+    def capture_end(self):
+        self.image_saver.save_img('rgb-final')
+        self.image_saver.save_img('depth-final')
+        self.img_in_dir += 1
 
     def run(self):
         rospy.init_node('PlacingDataCollection', anonymous=True)
@@ -317,6 +367,7 @@ class PlacingDataCollection(object):
             # Ready
             elif self.step == 1:
                 rospy.loginfo('I am ready')
+                self.open_hand()
                 self.send_message(self.msg.msg_i_am_ready)
                 self.step += 1
 
@@ -340,6 +391,8 @@ class PlacingDataCollection(object):
             elif self.step == 5:
                 rospy.loginfo('Finished capturing images')
                 self.send_message(self.msg.msg_images_captured)
+                self.close_hand()
+                self.goto_strategy()
                 self.step += 1
 
             #Moving to place object
@@ -348,8 +401,8 @@ class PlacingDataCollection(object):
                     self.set_arm_position("grasping_lower")  #For lower furniture
                 else:
                     self.set_arm_position("grasping_upper")  #For upper furniture
-                self.send_message(self.msg.msg_object_placed)
                 self.set_capturing_position()
+                self.send_message(self.msg.msg_object_placed)
                 self.step += 1
 
             # WaitForScore
@@ -358,6 +411,8 @@ class PlacingDataCollection(object):
 
             # ScoreSaved
             elif self.step == 8:
+                rospy.loginfo("SAVING FINAL IMAGE")
+                self.capture_end()
                 self.save_score()
                 rospy.loginfo('Score saved')
                 self.send_message(self.msg.msg_score_saved)

@@ -119,6 +119,7 @@ class ImageSaver(object):
 
             return new_output_dir
 
+
     def save_img(self, camera_type):
         """
         Saving image
@@ -175,9 +176,6 @@ class ImageSaver(object):
         else:
             rospy.logerr(
                 'camera_type must be depth or rgb, but in real %s' % str(camera_type))
-
-
-
 
 
     def __call__(self):
